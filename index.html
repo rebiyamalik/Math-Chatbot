@@ -1,1 +1,643 @@
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MathBot — Algebra & Linear Algebra Tutor</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0c0e14;--surf:#131720;--surf2:#1a1f2e;--bdr:#232840;--ac:#6c63ff;--ac2:#a99fff;--glow:rgba(108,99,255,.15);--gold:#f0c060;--tx:#e4e8f5;--mt:#5a6180;--mt2:#8892b0;--grn:#4ade80;--red:#f87171;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--tx);height:100vh;display:flex;flex-direction:column;overflow:hidden;}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(108,99,255,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(108,99,255,.025) 1px,transparent 1px);background-size:48px 48px;pointer-events:none;z-index:0;}
+header{position:relative;z-index:10;display:flex;align-items:center;justify-content:space-between;padding:12px 22px;border-bottom:1px solid var(--bdr);background:rgba(12,14,20,.97);flex-shrink:0;}
+.logo{display:flex;align-items:center;gap:10px;}
+.logo-icon{width:36px;height:36px;background:linear-gradient(135deg,var(--ac),#a99fff);border-radius:10px;display:flex;align-items:center;justify-content:center;font-family:'DM Serif Display',serif;font-size:19px;color:white;box-shadow:0 0 20px var(--glow);}
+.logo-name{font-family:'DM Serif Display',serif;font-size:19px;line-height:1.1;}
+.logo-name span{color:var(--ac2);}
+.logo-sub{font-size:10px;color:var(--mt);font-weight:300;}
+.hdr-r{display:flex;gap:8px;align-items:center;}
+.status{display:flex;align-items:center;gap:6px;margin-right:4px;}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--grn);box-shadow:0 0 6px var(--grn);animation:blink 2s infinite;}
+.dot.off{background:var(--red);box-shadow:0 0 6px var(--red);}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.4}}
+.stxt{font-size:11px;color:var(--mt2);font-weight:300;}
+.hbtn{width:33px;height:33px;background:var(--surf);border:1px solid var(--bdr);border-radius:8px;color:var(--mt2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px;transition:all .2s;}
+.hbtn:hover{background:var(--surf2);color:var(--tx);border-color:var(--ac);}
+
+/* SETUP */
+#setup{position:relative;z-index:9;background:linear-gradient(135deg,rgba(108,99,255,.15),rgba(108,99,255,.05));border-bottom:1px solid rgba(108,99,255,.3);padding:16px 22px;display:none;}
+#setup.show{display:block;}
+.s-title{font-size:13px;font-weight:600;color:var(--ac2);margin-bottom:6px;}
+.s-desc{font-size:12px;color:var(--mt2);margin-bottom:10px;line-height:1.65;}
+.s-row{display:flex;gap:8px;}
+#key-inp{flex:1;background:var(--bg);border:1px solid var(--bdr);border-radius:8px;padding:8px 12px;color:var(--tx);font-size:13px;font-family:'Outfit',sans-serif;outline:none;}
+#key-inp:focus{border-color:var(--ac);}
+#key-inp::placeholder{color:var(--mt);}
+.s-save{padding:8px 16px;background:var(--ac);border:none;border-radius:8px;color:white;font-size:13px;font-family:'Outfit',sans-serif;cursor:pointer;font-weight:500;white-space:nowrap;}
+.s-save:hover{background:var(--ac2);}
+.s-note{font-size:11px;color:var(--mt);margin-top:8px;}
+.s-note a{color:var(--ac2);text-decoration:none;}
+
+/* BOOK BADGES */
+.book-badges{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-bottom:16px;}
+.badge{font-size:11px;padding:4px 12px;border-radius:100px;border:1px solid;font-weight:500;}
+.badge.fraleigh{background:rgba(108,99,255,.1);border-color:rgba(108,99,255,.3);color:var(--ac2);}
+.badge.anton{background:rgba(240,192,96,.08);border-color:rgba(240,192,96,.3);color:var(--gold);}
+
+/* CHAT */
+#chat{flex:1;overflow-y:auto;padding:20px 0;position:relative;z-index:1;scroll-behavior:smooth;}
+#chat::-webkit-scrollbar{width:4px;}
+#chat::-webkit-scrollbar-thumb{background:var(--bdr);border-radius:2px;}
+.mw{max-width:840px;margin:0 auto;padding:0 20px;}
+.msg{margin-bottom:22px;display:flex;gap:12px;align-items:flex-start;animation:fu .3s ease;}
+.msg.user{flex-direction:row-reverse;}
+@keyframes fu{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.av{width:32px;height:32px;border-radius:9px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;}
+.av.bot{background:linear-gradient(135deg,var(--ac),#a99fff);color:white;font-family:'DM Serif Display',serif;font-size:16px;}
+.av.user{background:rgba(108,99,255,.15);border:1px solid rgba(108,99,255,.3);color:var(--ac2);}
+.bub{max-width:80%;padding:14px 18px;border-radius:14px;font-size:14.5px;line-height:1.8;font-weight:300;}
+.bub.bot{background:var(--surf);border:1px solid var(--bdr);border-top-left-radius:4px;}
+.bub.user{background:rgba(108,99,255,.12);border:1px solid rgba(108,99,255,.25);border-top-right-radius:4px;color:#c7cfff;}
+.bub.err{background:rgba(248,113,113,.07);border-color:rgba(248,113,113,.3);color:#fca5a5;}
+.bub code{font-family:'DM Mono',monospace;background:rgba(108,99,255,.12);border:1px solid rgba(108,99,255,.2);padding:1px 6px;border-radius:4px;font-size:13px;color:var(--ac2);}
+.bub pre{background:#090b10;border:1px solid var(--bdr);border-radius:8px;padding:12px;margin:8px 0;overflow-x:auto;font-family:'DM Mono',monospace;font-size:13px;}
+.bub strong{color:var(--ac2);font-weight:500;}
+.bub h3{font-size:14px;font-weight:600;color:var(--gold);margin:12px 0 5px;}
+.katex-display{margin:12px 0!important;overflow-x:auto;}
+.katex{font-size:1.02em;}
+.efix{font-size:12px;color:var(--mt2);margin-top:8px;line-height:1.6;}
+.efix a{color:var(--ac2);text-decoration:none;}
+.typing{display:flex;align-items:center;gap:5px;padding:4px 0;}
+.typing span{width:6px;height:6px;background:var(--ac);border-radius:50%;animation:bo 1.2s infinite;}
+.typing span:nth-child(2){animation-delay:.2s}.typing span:nth-child(3){animation-delay:.4s}
+@keyframes bo{0%,80%,100%{transform:scale(.8);opacity:.5}40%{transform:scale(1.2);opacity:1}}
+
+/* WELCOME */
+.wel{text-align:center;padding:36px 20px 24px;}
+.wel-t{font-family:'DM Serif Display',serif;font-size:29px;margin-bottom:6px;}
+.wel-t em{color:var(--ac2);font-style:italic;}
+.wel-s{font-size:13px;color:var(--mt);margin-bottom:14px;font-weight:300;}
+.tabs{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-bottom:14px;}
+.tab{padding:5px 14px;border-radius:100px;font-size:11.5px;font-weight:500;cursor:pointer;border:1px solid var(--bdr);background:transparent;color:var(--mt);transition:all .2s;font-family:'Outfit',sans-serif;}
+.tab:hover,.tab.on{background:var(--ac);color:white;border-color:var(--ac);}
+.tab.gold.on,.tab.gold:hover{background:var(--gold);color:#0c0e14;border-color:var(--gold);}
+.chips{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;max-width:760px;margin:0 auto;}
+.chip{background:var(--surf);border:1px solid var(--bdr);border-radius:100px;padding:8px 16px;font-size:12.5px;color:var(--mt2);cursor:pointer;transition:all .2s;font-family:'Outfit',sans-serif;}
+.chip:hover{background:var(--surf2);border-color:var(--ac);color:var(--ac2);box-shadow:0 0 14px var(--glow);}
+.chip[data-b="anton"]:hover{border-color:var(--gold);color:var(--gold);box-shadow:0 0 14px rgba(240,192,96,.15);}
+
+/* INPUT */
+.inp-area{position:relative;z-index:10;padding:12px 20px 16px;border-top:1px solid var(--bdr);background:rgba(12,14,20,.98);flex-shrink:0;}
+.inp-wrap{max-width:840px;margin:0 auto;}
+#pdf-bar{display:none;background:rgba(74,222,128,.08);border:1px solid rgba(74,222,128,.25);border-radius:8px;padding:7px 12px;margin-bottom:8px;font-size:12px;color:var(--grn);align-items:center;justify-content:space-between;gap:8px;}
+#pdf-bar.show{display:flex;}
+#pdf-bar button{background:none;border:none;color:var(--mt);cursor:pointer;font-size:14px;}
+.irow{display:flex;gap:8px;align-items:flex-end;background:var(--surf);border:1px solid var(--bdr);border-radius:14px;padding:10px 12px;transition:border-color .2s,box-shadow .2s;}
+.irow:focus-within{border-color:var(--ac);box-shadow:0 0 0 3px var(--glow);}
+#uinp{flex:1;background:none;border:none;outline:none;color:var(--tx);font-size:14.5px;font-family:'Outfit',sans-serif;font-weight:300;resize:none;min-height:24px;max-height:120px;line-height:1.6;}
+#uinp::placeholder{color:var(--mt);}
+.ibtns{display:flex;gap:5px;align-items:center;}
+.ibtn{width:34px;height:34px;border-radius:9px;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;transition:all .2s;background:transparent;color:var(--mt2);}
+.ibtn:hover{background:var(--surf2);color:var(--tx);}
+.ibtn.von{background:rgba(248,113,113,.15);color:var(--red);animation:vp 1s infinite;}
+@keyframes vp{0%,100%{box-shadow:0 0 0 0 rgba(248,113,113,.4)}50%{box-shadow:0 0 0 6px rgba(248,113,113,0)}}
+.sbtn{width:36px;height:36px;background:var(--ac);border:none;border-radius:10px;color:white;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px;transition:all .2s;}
+.sbtn:hover{background:var(--ac2);transform:scale(1.05);}
+.sbtn:disabled{opacity:.35;cursor:not-allowed;transform:none;}
+#pfile{display:none;}
+.hint{font-size:11px;color:var(--mt);text-align:center;margin-top:7px;font-weight:300;}
+#toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(16px);background:var(--surf2);border:1px solid var(--bdr);border-radius:8px;padding:8px 16px;font-size:13px;color:var(--tx);opacity:0;transition:all .3s;z-index:200;pointer-events:none;white-space:nowrap;}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">∑</div>
+    <div>
+      <div class="logo-name">Math<span>Bot</span></div>
+      <div class="logo-sub">Abstract Algebra · Linear Algebra · Matrices</div>
+    </div>
+  </div>
+  <div class="hdr-r">
+    <div class="status"><div class="dot" id="sdot"></div><span class="stxt" id="stxt">Ready</span></div>
+    <button class="hbtn" title="API Key Settings" onclick="toggleSetup()">⚙️</button>
+    <button class="hbtn" title="Save chat as PDF" onclick="savePDF()">💾</button>
+    <button class="hbtn" title="Clear chat" onclick="clearChat()">🗑️</button>
+  </div>
+</header>
+
+<div id="setup">
+  <div class="s-title">🔑 Enter your Google Gemini API Key — required for the chatbot to work</div>
+  <div class="s-desc">
+    The chatbot calls Google Gemini AI from your browser using your personal API key.<br>
+    Your key is saved <strong>only in your browser (localStorage)</strong> — it is never sent anywhere else.
+  </div>
+  <div class="s-row">
+    <input type="password" id="key-inp" placeholder="AIzaSyXXXXXXXX..." autocomplete="off">
+    <button class="s-save" onclick="saveKey()">Save &amp; Activate ✓</button>
+  </div>
+  <div class="s-note">
+    📌 Get a FREE key at <a href="https://aistudio.google.com" target="_blank">aistudio.google.com</a> → Get API Key. The free tier resets allocations daily.
+  </div>
+</div>
+
+<div id="chat">
+  <div class="mw">
+    <div class="wel" id="wel">
+      <div class="wel-t">Hello, <em>mathematician</em> 👋</div>
+      <p class="wel-s">Your AI tutor — trained on two university textbooks</p>
+
+      <div class="book-badges">
+        <span class="badge fraleigh">📘 Fraleigh &amp; Brand — Abstract Algebra (8th Ed.)</span>
+        <span class="badge anton">📗 Anton &amp; Kaul — Elementary Linear Algebra (12th Ed.)</span>
+      </div>
+
+      <div class="tabs" id="tabs">
+        <button class="tab on"     onclick="filter('all',this)">All Topics</button>
+        <button class="tab"        onclick="filter('groups',this)">Groups</button>
+        <button class="tab"        onclick="filter('rings',this)">Rings &amp; Fields</button>
+        <button class="tab gold"   onclick="filter('systems',this)">Linear Systems</button>
+        <button class="tab gold"   onclick="filter('matrices',this)">Matrices</button>
+        <button class="tab gold"   onclick="filter('vectors',this)">Vectors &amp; Spaces</button>
+        <button class="tab gold"   onclick="filter('eigen',this)">Eigenvalues</button>
+        <button class="tab"        onclick="filter('algebra',this)">Algebra</button>
+      </div>
+
+      <div class="chips" id="chips">
+        <div class="chip" data-c="groups" data-b="fraleigh" onclick="ask(this)">What is a group? (Fraleigh Def. 2.1)</div>
+        <div class="chip" data-c="groups" data-b="fraleigh" onclick="ask(this)">Prove the cancellation law in a group</div>
+        <div class="chip" data-c="groups" data-b="fraleigh" onclick="ask(this)">What is a group isomorphism?</div>
+        <div class="chip" data-c="groups" data-b="fraleigh" onclick="ask(this)">Find all groups of order 4 up to isomorphism</div>
+        <div class="chip" data-c="groups" data-b="fraleigh" onclick="ask(this)">What is a subgroup? (Theorem 5.12)</div>
+        <div class="chip" data-c="groups" data-b="fraleigh" onclick="ask(this)">Explain cyclic groups with examples</div>
+        <div class="chip" data-c="groups" data-b="fraleigh" onclick="ask(this)">State and prove Lagrange's Theorem</div>
+        <div class="chip" data-c="groups" data-b="fraleigh" onclick="ask(this)">What is a normal subgroup and factor group?</div>
+        <div class="chip" data-c="groups" data-b="fraleigh" onclick="ask(this)">What is the alternating group Aₙ?</div>
+        <div class="chip" data-c="groups" data-b="fraleigh" onclick="ask(this)">Explain Cayley's Theorem</div>
+        <div class="chip" data-c="rings" data-b="fraleigh" onclick="ask(this)">What is a ring? Definition and examples</div>
+        <div class="chip" data-c="rings" data-b="fraleigh" onclick="ask(this)">Difference: ring vs field vs integral domain</div>
+        <div class="chip" data-c="rings" data-b="fraleigh" onclick="ask(this)">State Fermat's Little Theorem and prove it</div>
+        <div class="chip" data-c="rings" data-b="fraleigh" onclick="ask(this)">What are ideals? Prime vs maximal ideals</div>
+        <div class="chip" data-c="rings" data-b="fraleigh" onclick="ask(this)">Is ℤ₆ a field? Why or why not?</div>
+        <div class="chip" data-c="systems" data-b="anton" onclick="ask(this)">Solve using Gaussian elimination (Anton §1.2)</div>
+        <div class="chip" data-c="systems" data-b="anton" onclick="ask(this)">Solve: x+y+2z=9, 2x+4y−3z=1, 3x+6y−5z=0</div>
+        <div class="chip" data-c="systems" data-b="anton" onclick="ask(this)">What is RREF? How do you get there?</div>
+        <div class="chip" data-c="systems" data-b="anton" onclick="ask(this)">Gauss-Jordan vs Gaussian elimination — difference?</div>
+        <div class="chip" data-c="systems" data-b="anton" onclick="ask(this)">What does it mean for a system to be consistent?</div>
+        <div class="chip" data-c="systems" data-b="anton" onclick="ask(this)">Free Variable Theorem for homogeneous systems</div>
+        <div class="chip" data-c="matrices" data-b="anton" onclick="ask(this)">Find inverse of [[2,1],[5,3]] step by step</div>
+        <div class="chip" data-c="matrices" data-b="anton" onclick="ask(this)">Multiply matrices [[1,2],[3,4]] × [[5,6],[7,8]]</div>
+        <div class="chip" data-c="matrices" data-b="anton" onclick="ask(this)">Compute determinant of 3×3 by cofactor expansion</div>
+        <div class="chip" data-c="matrices" data-b="anton" onclick="ask(this)">What is Cramer's Rule? (Theorem 2.3.7)</div>
+        <div class="chip" data-c="matrices" data-b="anton" onclick="ask(this)">State the Equivalence Theorem (Theorem 2.3.8)</div>
+        <div class="chip" data-c="matrices" data-b="anton" onclick="ask(this)">What is transpose and trace of a matrix?</div>
+        <div class="chip" data-c="matrices" data-b="anton" onclick="ask(this)">LU decomposition — what is it and why use it?</div>
+        <div class="chip" data-c="vectors" data-b="anton" onclick="ask(this)">What is a vector space? (Anton §4.1)</div>
+        <div class="chip" data-c="vectors" data-b="anton" onclick="ask(this)">What is a subspace? How to check?</div>
+        <div class="chip" data-c="vectors" data-b="anton" onclick="ask(this)">Explain linear independence and spanning sets</div>
+        <div class="chip" data-c="vectors" data-b="anton" onclick="ask(this)">What is a basis and dimension?</div>
+        <div class="chip" data-c="vectors" data-b="anton" onclick="ask(this)">Explain null space, row space, column space</div>
+        <div class="chip" data-c="vectors" data-b="anton" onclick="ask(this)">What is rank and nullity? Rank-Nullity Theorem</div>
+        <div class="chip" data-c="vectors" data-b="anton" onclick="ask(this)">Gram-Schmidt process explained with example</div>
+        <div class="chip" data-c="vectors" data-b="anton" onclick="ask(this)">Dot product, norm, and orthogonality in Rⁿ</div>
+        <div class="chip" data-c="eigen" data-b="anton" onclick="ask(this)">Find eigenvalues and eigenvectors of [[3,1],[1,3]]</div>
+        <div class="chip" data-c="eigen" data-b="anton" onclick="ask(this)">When is a matrix diagonalizable? (§5.2)</div>
+        <div class="chip" data-c="eigen" data-b="anton" onclick="ask(this)">What is the characteristic polynomial?</div>
+        <div class="chip" data-c="eigen" data-b="anton" onclick="ask(this)">Geometric vs algebraic multiplicity</div>
+        <div class="chip" data-c="eigen" data-b="anton" onclick="ask(this)">What is orthogonal diagonalization?</div>
+        <div class="chip" data-c="eigen" data-b="anton" onclick="ask(this)">Explain singular value decomposition (SVD)</div>
+        <div class="chip" data-c="algebra" data-b="fraleigh" onclick="ask(this)">Solve: x² − 5x + 6 = 0 step by step</div>
+        <div class="chip" data-c="algebra" data-b="fraleigh" onclick="ask(this)">What is an equivalence relation?</div>
+        <div class="chip" data-c="algebra" data-b="fraleigh" onclick="ask(this)">Explain congruence modulo n</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="inp-area">
+  <div class="inp-wrap">
+    <div id="pdf-bar">
+      <span id="pdf-lbl">📄 PDF loaded</span>
+      <button onclick="clearPDF()">✕</button>
+    </div>
+    <div class="irow">
+      <textarea id="uinp" rows="1"
+        placeholder="Ask about groups, rings, matrices, eigenvalues, linear systems…"
+        onkeydown="handleKey(event)"
+        oninput="autoResize(this)"></textarea>
+      <div class="ibtns">
+        <button class="ibtn" id="vbtn" title="Voice input (Chrome/Edge)" onclick="toggleVoice()">🎤</button>
+        <button class="ibtn" title="Upload PDF assignment" onclick="document.getElementById('pfile').click()">📎</button>
+        <input type="file" id="pfile" accept=".pdf" onchange="loadPDF(event)">
+        <button class="sbtn" id="sbtn" onclick="send()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        </button>
+      </div>
+    </div>
+    <p class="hint">Enter to send · Shift+Enter for new line · 🎤 voice (Chrome) · 📎 upload PDF assignment</p>
+  </div>
+</div>
+<div id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+// BOOK 1: FRALEIGH — Abstract Algebra (8th Ed.)
+// ═══════════════════════════════════════════════════════════
+const FRALEIGH = `
+=== BOOK 1: "A First Course in Abstract Algebra" — Fraleigh & Brand, 8th Ed., Pearson 2021 ===
+
+SECTION 0 — SETS & RELATIONS:
+- Def 0.12: Injective (one-to-one): φ(x₁)=φ(x₂)⟹x₁=x₂. Surjective (onto): range=Y. Bijective: both.
+- Def 0.16: Partition of S — nonempty disjoint subsets covering S.
+- Def 0.18: Equivalence relation ∼: reflexive, symmetric, transitive.
+- Example 0.20: Congruence mod n: a≡b(mod n) iff n|(a−b). Theorem 0.22: yields partition into equivalence classes.
+
+SECTION 1 — BINARY OPERATIONS:
+- Def 1.1: Binary operation * on S: function S×S→S.
+- Properties: commutative a*b=b*a, associative (a*b)*c=a*(b*c).
+
+SECTION 2 — GROUPS:
+- Def 2.1: (G,*) is a group: (G1) associativity; (G2) identity e; (G3) inverses.
+- Abelian group: also commutative.
+- Examples: (ℤ,+), (ℝ*,·), (ℤₙ,+ₙ), GL(n,ℝ).
+- Theorem 2.16: Cancellation: a*b=a*c ⟹ b=c.
+- Theorem 2.17: a*x=b and y*a=b have UNIQUE solutions.
+- Theorem 2.18: Identity and inverses are unique.
+- Corollary 2.19: (a*b)'=b'*a'.
+- Def 2.22: Isomorphism f:G₁→G₂ — bijection with f(a*b)=f(a)*f(b).
+- Up to isomorphism: 1 group each of order 1,2,3. Two of order 4: ℤ₄ and Klein four-group V₄.
+
+SECTIONS 3-4 — EXAMPLES:
+- ℤₙ: cyclic abelian group of order n. Direct products.
+- Sₙ (symmetric group): all permutations of {1,...,n}, order n!.
+- Cycle notation: (a₁ a₂ ... aₖ). Every permutation = product of transpositions.
+- Dₙ (dihedral group): symmetries of regular n-gon, order 2n. ρ (rotation), μ (reflection).
+
+SECTION 5 — SUBGROUPS:
+- Def: H≤G iff H≠∅, closed under * and inverses.
+- Theorem 5.12: H≤G iff H≠∅ and ∀a,b∈H: ab⁻¹∈H.
+- Center Z(G)={a:ax=xa ∀x}≤G.
+
+SECTION 6 — CYCLIC GROUPS:
+- ⟨a⟩={aⁿ|n∈ℤ}. Order of a: smallest n>0 with aⁿ=e.
+- Every subgroup of cyclic group is cyclic. ℤₙ generated by 1.
+
+SECTION 8 — PERMUTATIONS:
+- Cayley's Theorem: Every group G≅subgroup of S_{|G|}.
+- Kernel of homomorphism φ: ker(φ)=φ⁻¹(e')≤G.
+- Alternating group Aₙ: even permutations, order n!/2 (n≥2).
+
+SECTION 10 — COSETS & LAGRANGE:
+- Left coset aH={ah|h∈H}. Right coset Ha.
+- Lagrange's Theorem: |H| divides |G| for finite G, H≤G. Index [G:H]=|G|/|H|.
+
+SECTION 12 — FACTOR GROUPS:
+- H◁G (normal): gH=Hg ∀g∈G.
+- Factor group G/H: (aH)(bH)=(ab)H.
+- First Isomorphism Theorem: G/ker(φ)≅φ[G].
+
+SECTIONS 22-25 — RINGS & FIELDS:
+- Ring (R,+,·): (R,+) abelian group, · associative, distributive.
+- Integral domain: comm. ring with unity, no zero divisors.
+- Field: comm. ring with unity, every nonzero element invertible.
+- Hierarchy: Fields ⊂ Integral Domains ⊂ Comm. Rings ⊂ Rings.
+- ℤₙ is field iff n prime. ℚ,ℝ,ℂ are fields.
+- Fermat's Little Theorem: p prime, p∤a ⟹ aᵖ⁻¹≡1(mod p).
+- Euler's Theorem: gcd(a,n)=1 ⟹ aᵠ⁽ⁿ⁾≡1(mod n).
+
+SECTIONS 30-31 — IDEALS:
+- Ideal I◁R: (I,+)≤(R,+), rI⊆I and Ir⊆I.
+- Factor ring R/I. Principal ideal ⟨a⟩={ra}.
+- Maximal ideal M: R/M is field. Prime ideal P: R/P is integral domain.
+`;
+
+// ═══════════════════════════════════════════════════════════
+// BOOK 2: ANTON — Elementary Linear Algebra (12th Ed.)
+// ═══════════════════════════════════════════════════════════
+const ANTON = `
+=== BOOK 2: "Elementary Linear Algebra" — Howard Anton & Anton Kaul, 12th Ed., Wiley 2019 ===
+
+CHAPTER 1 — LINEAR SYSTEMS & MATRICES:
+- Linear equation: a₁x₁+...+aₙxₙ=b. System: m equations in n unknowns.
+- Augmented matrix [A|b]. Elementary row operations: scale, swap, add multiple of row.
+- Row Echelon Form (REF): leading 1s step right, zeros below. RREF: also zeros above.
+- Gaussian Elimination → REF → back-substitution. Gauss-Jordan → RREF directly.
+- Theorem 1.2.1 (Free Variable Theorem): homogeneous system with n unknowns and r nonzero rows in RREF has n−r free variables.
+- Theorem 1.2.2: Homogeneous system with more unknowns than equations has infinitely many solutions.
+- Consistent system: at least one solution. Inconsistent: no solution. Every linear system has 0, 1, or ∞ solutions.
+- Matrix Def (§1.3): rectangular array. Size m×n. Entry aᵢⱼ in row i, col j.
+- Addition: same-size matrices, add componentwise. Scalar multiple: multiply each entry.
+- Def 1.3(5): Product AB: A is m×r, B is r×n → AB is m×n. (AB)ᵢⱼ = row i of A · col j of B.
+- Theorem 1.3.1: Ax = linear combination of columns of A with coefficients from x.
+- Transpose Aᵀ: rows↔columns. Trace tr(A): sum of diagonal entries.
+- Theorem 1.4.1: Properties of matrix arithmetic (associative mult., distributive, etc.). Note: AB≠BA in general.
+- Def: Invertible (nonsingular) matrix A: ∃A⁻¹ with AA⁻¹=A⁻¹A=I.
+- For 2×2: [[a,b],[c,d]]⁻¹ = (1/(ad−bc))[[d,−b],[−c,a]], provided ad−bc≠0.
+- Elementary matrices: result of single row op on I. A invertible ⟺ A=product of elementary matrices.
+
+CHAPTER 2 — DETERMINANTS:
+- Cofactor expansion along row i: det(A) = Σⱼ aᵢⱼCᵢⱼ where Cᵢⱼ=(−1)^(i+j)Mᵢⱼ.
+- det(AB)=det(A)det(B). det(Aᵀ)=det(A). det(A⁻¹)=1/det(A).
+- Row reduction: each row swap → sign flip; scale row by k → det×k.
+- Theorem 2.3.6: A⁻¹ = (1/det(A))·adj(A) where adj(A) = transposed cofactor matrix.
+- Theorem 2.3.7 (Cramer's Rule): If det(A)≠0, xᵢ=det(Aᵢ)/det(A) where Aᵢ=A with col i replaced by b.
+- Theorem 2.3.8 (Equivalence Theorem — THE big theorem): For n×n matrix A, equivalent:
+  (a) A invertible; (b) Ax=0 has only trivial solution; (c) RREF of A is Iₙ;
+  (d) A=product of elementary matrices; (e) Ax=b consistent ∀b; (f) Ax=b has exactly one solution ∀b; (g) det(A)≠0.
+
+CHAPTER 3 — EUCLIDEAN VECTOR SPACES:
+- Def 3.1(1): Vectors in Rⁿ: n-tuples. Operations: addition, scalar multiplication, componentwise.
+- Theorem 3.1.1: Properties of vector arithmetic (8 axioms — same as abstract vector space axioms).
+- Def 3.2(1): Norm ‖v‖=√(v₁²+...+vₙ²). Unit vector: ‖u‖=1. Normalize: u=v/‖v‖.
+- Def 3.2(2): Distance d(u,v)=‖u−v‖.
+- Def 3.2(3): Dot product u·v=‖u‖‖v‖cosθ = u₁v₁+...+uₙvₙ.
+- Theorem 3.2.2: Properties of dot product. Cauchy-Schwarz: |u·v|≤‖u‖‖v‖.
+- Orthogonality: u⊥v iff u·v=0.
+- Cross product in R³: u×v — perpendicular to both, ‖u×v‖=‖u‖‖v‖sinθ.
+
+CHAPTER 4 — GENERAL VECTOR SPACES:
+- Def 4.1: Vector space V over ℝ: 10 axioms (closure under + and scalar mult., commutativity, associativity, zero vector, negatives, distributivity×2, associativity of scalar mult., scalar 1).
+- Examples: Rⁿ, Mₘₙ (matrices), Pₙ (polynomials of degree ≤n), F[a,b] (functions on [a,b]).
+- Def 4.2: Subspace W≤V: W≠∅, closed under addition and scalar multiplication.
+- Test: W is subspace iff (i) 0∈W, (ii) u,v∈W⟹u+v∈W, (iii) c∈ℝ,v∈W⟹cv∈W.
+- Def 4.3: Spanning set. span{v₁,...,vₖ}=all linear combinations.
+- Def 4.4: Linearly independent: c₁v₁+...+cₖvₖ=0 ⟹ c₁=...=cₖ=0. Otherwise dependent.
+- Def 4.5: Basis — linearly independent spanning set. Standard basis for Rⁿ: {e₁,...,eₙ}.
+- Def 4.6: Dimension dim(V) = number of vectors in any basis.
+- Def 4.8: Row space = span of rows. Column space = span of columns. Null space N(A)={x:Ax=0}.
+- Theorem: row rank = column rank = rank(A). Nullity = n−rank (Rank-Nullity Theorem).
+- Def 4.9: For m×n matrix A: rank(A)+nullity(A)=n.
+
+CHAPTER 5 — EIGENVALUES & EIGENVECTORS:
+- Def: λ is eigenvalue of A if Ax=λx for some nonzero vector x (eigenvector).
+- Characteristic equation: det(λI−A)=0. Characteristic polynomial.
+- Eigenspace for λ: null space of (λI−A).
+- Theorem 5.1.2: Triangular matrix → eigenvalues are diagonal entries.
+- Theorem 5.2.2: (a) Eigenvectors for distinct eigenvalues are linearly independent. (b) n×n matrix with n distinct eigenvalues is diagonalizable.
+- Diagonalization: A=PDP⁻¹ where D=diagonal of eigenvalues, P=matrix of eigenvectors.
+- Theorem 5.2.4: Geometric multiplicity ≤ algebraic multiplicity. A diagonalizable iff geom. mult. = alg. mult. for all eigenvalues.
+- Theorem 5.3.5: 2×2 matrix A: char. equation λ²−tr(A)λ+det(A)=0.
+  Two real distinct if tr²−4det>0; one repeated if =0; complex conjugate pair if <0.
+- Theorem 5.3.6: Real symmetric matrix has real eigenvalues.
+
+CHAPTER 6 — INNER PRODUCT SPACES:
+- Inner product ⟨u,v⟩: positive definite, symmetric, bilinear.
+- Cauchy-Schwarz: |⟨u,v⟩|≤‖u‖‖v‖. Triangle inequality: ‖u+v‖≤‖u‖+‖v‖.
+- Orthogonal set: mutually perpendicular. Orthonormal: also unit vectors.
+- Gram-Schmidt: given {v₁,...,vₖ}, produces orthonormal {u₁,...,uₖ}:
+  u₁=v₁/‖v₁‖; wₖ=vₖ−⟨vₖ,u₁⟩u₁−...−⟨vₖ,uₖ₋₁⟩uₖ₋₁; uₖ=wₖ/‖wₖ‖.
+- QR-decomposition: A=QR where Q=orthonormal columns, R=upper triangular.
+- Least squares: minimize ‖Ax−b‖. Normal equations: AᵀAx=Aᵀb. Solution: x̂=(AᵀA)⁻¹Aᵀb.
+
+CHAPTER 7 — DIAGONALIZATION & QUADRATIC FORMS:
+- Orthogonal matrix P: Pᵀ=P⁻¹ (columns form orthonormal set).
+- Orthogonal diagonalization: real symmetric A → A=PDP ᵀ with P orthogonal.
+- Spectral Theorem: real symmetric matrix is orthogonally diagonalizable.
+- Quadratic form Q(x)=xᵀAx where A symmetric. Principal axes: Q in standard form via rotation.
+- Classify by eigenvalues: positive definite (all λ>0), negative definite (all λ<0), indefinite (mixed).
+
+CHAPTER 8 — LINEAR TRANSFORMATIONS:
+- T:V-->W is linear if T(u+v)=T(u)+T(v) and T(cu)=cT(u).
+- Kernel ker(T)={v:T(v)=0}. Range im(T).
+- Dimension theorem: dim(ker T)+dim(im T)=dim(V).
+- Isomorphism: bijective linear transformation.
+- Matrix representation: [T]_B where B is ordered basis.
+
+CHAPTER 9 — NUMERICAL METHODS:
+- LU-decomposition: A=LU (L lower triangular, U upper triangular). Solves Ax=b efficiently.
+- Power method: iterative algorithm to find dominant eigenvalue.
+- SVD: A=UΣVᵀ. Σ=diagonal matrix of singular values (√eigenvalues of AᵀA). Used for data compression.
+- Rank-k approximation via SVD: Aₖ=σ₁u₁v₁ᵀ+...+σₖuₖvₖᵀ.
+`;
+
+// ═══════════════════════════════════════════════════════════
+// SYSTEM PROMPT
+// ═══════════════════════════════════════════════════════════
+const SYS = `You are MathBot, an expert mathematics tutor for university students. You have been trained on two specific textbooks:
+
+${FRALEIGH}
+
+${ANTON}
+
+YOUR RULES:
+1. ALWAYS solve step by step with numbered steps.
+2. CITE the textbook and section: "By Theorem 2.3.8 (Anton)...", "Using Definition 2.1 (Fraleigh)...", "From §4.2 (Anton)..."
+3. When relevant, note which book the topic comes from: (Fraleigh) or (Anton).
+4. Use LaTeX for ALL math:
+   - Inline: $...$ for $\\lambda$, $|G|$, $\\det(A)$, $\\mathbb{R}^n$
+   - Display: $$...$$ for equations, proofs, matrices
+   - Matrices: $$\\begin{pmatrix} a & b \\\\ c & d \\end{pmatrix}$$  or $$\\begin{bmatrix} a & b \\\\ c & d \\end{bmatrix}$$
+   - Number sets: $\\mathbb{Z}$, $\\mathbb{R}$, $\\mathbb{Q}$, $\\mathbb{C}$, $\\mathbb{Z}_n$, $\\mathbb{R}^n$
+5. Structure: State what you're solving → show full working → conclude clearly
+6. For proofs: state what to prove, which axioms/theorems used, then prove step by step
+7. Be encouraging — students are learning abstract or linear algebra for the first time
+8. Always end with **Key Takeaway:** in 1-2 sentences`;
+
+// ═══════════════════════════════════════════════════════════
+// STATE (Configured with your personal Google Gemini API Key)
+// ═══════════════════════════════════════════════════════════
+let history=[],loading=false,pdfText='',apiKey='AIzaSyA9rG5JmOm0QoXWS7UVdSyw9nEHEL-xCBc',rec=null,listening=false;
+
+window.onload=()=>{
+  pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  if(!apiKey || apiKey.includes('YOUR_ACTUAL_GEMINI_KEY')){document.getElementById('setup').classList.add('show');setStatus(false,'API key needed');}
+  else {
+    document.getElementById('key-inp').value=apiKey;
+    setStatus(true,'Ready');
+  }
+};
+
+function toggleSetup(){document.getElementById('setup').classList.toggle('show');}
+function saveKey(){
+  const v=document.getElementById('key-inp').value.trim();
+  if(!v.startsWith('AIzaSy')){toast('⚠️ Key should start with AIzaSy...');return;}
+  apiKey=v;localStorage.setItem('mb_key',v);
+  document.getElementById('setup').classList.remove('show');
+  setStatus(true,'Ready');toast('✅ Key saved! Ask any question.');
+}
+function setStatus(ok,t){document.getElementById('sdot').className='dot'+(ok?'':' off');document.getElementById('stxt').textContent=t;}
+
+async function send(t){
+  if(!apiKey || apiKey.includes('YOUR_ACTUAL_GEMINI_KEY')){document.getElementById('setup').classList.add('show');toast('⚠️ Enter your Gemini API key first');return;}
+  const inp=document.getElementById('uinp');
+  const text=t||inp.value.trim();
+  if(!text||loading)return;
+  hideWel();inp.value='';autoResize(inp);
+  let content=text;
+  if(pdfText)content=`[Student uploaded a PDF assignment/question]\n\n${pdfText}\n\n---\nStudent's question: ${text}`;
+  addMsg('user',text);
+  
+  history.push({role:'user', parts:[{text: content}]});
+  setLoad(true);
+  const typing=addTyping();
+  try{
+    // Fix applied here: points to stable v1 API version context routing path
+    const r=await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        contents: history,
+        systemInstruction: { parts: [{ text: SYS }] }
+      })
+    });
+    if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e.error?.message||'HTTP '+r.status);}
+    const d=await r.json();
+    const reply=d.candidates?.[0]?.content?.parts?.[0]?.text || 'No response.';
+    
+    history.push({role:'model', parts:[{text: reply}]});
+    typing.remove();addMsg('bot',reply);setStatus(true,'Ready');
+  }catch(e){
+    typing.remove();
+    const isAuth=e.message.includes('API_KEY_INVALID')||e.message.includes('400')||e.message.includes('403');
+    let h=`<strong>⚠️ ${e.message}</strong>`;
+    if(isAuth)h+=`<div class="efix">🔑 Invalid Gemini API key. <a href="#" onclick="toggleSetup();return false">Update it here</a>. Get a free key at <a href="https://aistudio.google.com" target="_blank">aistudio.google.com</a>.</div>`;
+    else h+=`<div class="efix">💡 <a href="#" onclick="toggleSetup();return false">Check API key</a> · Check internet connection</div>`;
+    addMsg('bot',h,true,true);setStatus(false,'Error');
+  }
+  setLoad(false);
+}
+
+function addMsg(role,text,isErr=false,raw=false){
+  const area=document.getElementById('chat');
+  const w=document.createElement('div');w.className='mw';
+  const m=document.createElement('div');m.className='msg '+(role==='model'?'bot':role);
+  const av=document.createElement('div');av.className='av '+(role==='model'?'bot':role);av.textContent=role==='model'||role==='bot'?'∑':'You';
+  const b=document.createElement('div');b.className='bub '+(role==='model'?'bot':role)+(isErr?' err':'');
+  if((role==='bot'||role==='model')&&!raw){
+    b.innerHTML=fmt(text);
+    renderMathInElement(b,{delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false},{left:'\\[',right:'\\]',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false,strict:false});
+  }else if(raw)b.innerHTML=text;
+  else b.textContent=text;
+  m.appendChild(av);m.appendChild(b);w.appendChild(m);area.scrollTop=area.scrollHeight;
+}
+function fmt(t){
+  return t
+    .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+    .replace(/^### (.+)$/gm,'<h3>$1</h3>')
+    .replace(/^#### (.+)$/gm,'<h3 style="font-size:13px;color:var(--mt2)">$1</h3>')
+    .replace(/```[\w]*\n?([\s\S]*?)```/g,'<pre><code>$1</code></pre>')
+    .replace(/`([^`]+)`/g,'<code>$1</code>')
+    .replace(/^---$/gm,'<hr style="border-color:var(--bdr);margin:10px 0">')
+    .replace(/\n/g,'<br>');
+}
+function addTyping(){
+  const area=document.getElementById('chat');
+  const w=document.createElement('div');w.className='mw';
+  const m=document.createElement('div');m.className='msg bot';
+  const av=document.createElement('div');av.className='av bot';av.textContent='∑';
+  const b=document.createElement('div');b.className='bub bot';
+  b.innerHTML='<div class="typing"><span></span><span></span><span></span></div>';
+  m.appendChild(av);m.appendChild(b);w.appendChild(m);area.scrollTop=area.scrollHeight;return w;
+}
+function setLoad(s){loading=s;document.getElementById('sbtn').disabled=s;}
+function hideWel(){const w=document.getElementById('wel');if(w)w.style.display='none';}
+function ask(el){send(el.textContent);}
+function filter(cat,btn){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
+  btn.classList.add('on');
+  document.querySelectorAll('.chip').forEach(c=>{c.style.display=(cat==='all'||c.dataset.c===cat)?'':'none';});
+}
+function handleKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send();}}
+function autoResize(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,120)+'px';}
+
+function clearChat(){
+  history=[];pdfText='';
+  const area=document.getElementById('chat');
+  area.innerHTML=`<div class="mw"><div class="wel" id="wel">
+    <div class="wel-t">Hello, <em>mathematician</em> 👋</div>
+    <p class="wel-s">Trained on Fraleigh (Abstract Algebra) + Anton (Linear Algebra)</p>
+    <div class="chips" style="margin-top:18px">
+      <div class="chip" onclick="ask(this)">What is a group? (Fraleigh Def. 2.1)</div>
+      <div class="chip" onclick="ask(this)">Solve a 3×3 system by Gaussian elimination</div>
+      <div class="chip" onclick="ask(this)">Find eigenvalues of [[3,1],[1,3]]</div>
+      <div class="chip" onclick="ask(this)">State the Rank-Nullity Theorem</div>
+      <div class="chip" onclick="ask(this)">What is a ring vs a field?</div>
+      <div class="chip" onclick="ask(this)">Explain Gram-Schmidt process</div>
+    </div>
+  </div></div>`;
+  clearPDF();toast('Chat cleared');
+}
+
+function toggleVoice(){
+  if(!('webkitSpeechRecognition' in window)&&!('SpeechRecognition' in window)){toast('Voice only works in Chrome or Edge');return;}
+  const btn=document.getElementById('vbtn');
+  if(listening){rec.stop();return;}
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  rec=new SR();rec.continuous=false;rec.interimResults=true;rec.lang='en-US';
+  rec.onstart=()=>{listening=true;btn.classList.add('von');toast('🎤 Listening…');};
+  rec.onresult=(e)=>{document.getElementById('uinp').value=Array.from(e.results).map(r=>r[0].transcript).join('');};
+  rec.onend=()=>{listening=false;btn.classList.remove('von');};
+  rec.onerror=(e)=>{toast('Voice error: '+e.error);listening=false;btn.classList.remove('von');};
+  rec.start();
+}
+
+async function loadPDF(ev){
+  const file=ev.target.files[0];if(!file)return;
+  toast('📄 Reading PDF…');
+  try{
+    const buf=await file.arrayBuffer();
+    const pdf=await pdfjsLib.getDocument({data:buf}).promise;
+    let txt='';
+    for(let i=1;i<=Math.min(pdf.numPages,15);i++){
+      const pg=await pdf.getPage(i);
+      const tc=await pg.getTextContent();
+      txt+=`[Page ${i}]\n`+tc.items.map(x=>x.str).join(' ')+'\n\n';
+    }
+    pdfText=txt.trim();
+    document.getElementById('pdf-lbl').textContent=`📄 "${file.name}" (${pdf.numPages} pages) — ask me anything`;
+    document.getElementById('pdf-bar').classList.add('show');
+    toast(`✅ PDF loaded: ${pdf.numPages} pages`);
+  }catch(e){toast('❌ PDF error: '+e.message);}
+  ev.target.value='';
+}
+function clearPDF(){pdfText='';document.getElementById('pdf-bar').classList.remove('show');}
+
+function savePDF(){
+  if(!history.length){toast('No conversation to save yet');return;}
+  try{
+    const{jsPDF}=window.jspdf;
+    const doc=new jsPDF({unit:'mm',format:'a4'});
+    const W=170,M=20;let y=M;
+    doc.setFont('helvetica','bold');doc.setFontSize(16);doc.setTextColor(80,70,220);
+    doc.text('MathBot — Math Session',M,y);y+=7;
+    doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(130,130,130);
+    doc.text('Fraleigh Abstract Algebra + Anton Linear Algebra | '+new Date().toLocaleString(),M,y);y+=10;
+    doc.setDrawColor(200,200,200);doc.line(M,y,210-M,y);y+=8;
+    for(const m of history){
+      if(y>265){doc.addPage();y=M;}
+      doc.setFont('helvetica','bold');doc.setFontSize(8);
+      const isUser = m.role === 'user';
+      doc.setTextColor(isUser?60:108,isUser?80:99,220);
+      doc.text(isUser?'▶  You':'∑  MathBot',M,y);y+=5;
+      doc.setFont('helvetica','normal');doc.setFontSize(10);doc.setTextColor(30,30,30);
+      
+      let c= (m.parts?.[0]?.text || '')
+        .replace(/\App\b/g, '')
+        .replace(/\$$([\s\S]*?)\$\$/g,(_,x)=>'['+x.trim()+']')
+        .replace(/\$(.*?)\$/g,(_,x)=>x.trim())
+        .replace(/\*\*(.*?)\*\"/g,'$1')
+        .replace(/#{1,4} /g,'')
+        .replace(/```[\s\S]*?```/g,'[code]');
+      if(c.length>700)c=c.slice(0,700)+'…';
+      const lines=doc.splitTextToSize(c,W);
+      for(const ln of lines){if(y>270){doc.addPage();y=M;}doc.text(ln,M,y);y+=5;}
+      y+=5;doc.setDrawColor(230,230,230);doc.line(M,y-2,210-M,y-2);y+=3;
+    }
+    doc.save('MathBot-'+Date.now()+'.pdf');toast('✅ Saved!');
+  }catch(e){toast('Save failed: '+e.message);}
+}
+
+let tt;
+function toast(msg){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');clearTimeout(tt);tt=setTimeout(()=>el.classList.remove('show'),3000);}
+</script>
+</body>
+</html>
